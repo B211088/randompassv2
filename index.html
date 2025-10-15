@@ -127,7 +127,8 @@
     const LOWER = "abcdefghijklmnopqrstuvwxyz";
     const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const DIGITS = "0123456789";
-    const ALL = LOWER + UPPER + DIGITS;
+    const GIAU = "#"
+    const ALL = LOWER + UPPER + DIGITS ;
     const LENGTH = 16;
 
     let currentPassword = "";
@@ -146,6 +147,7 @@
     function generatePassword() {
       const pwd = [
         LOWER[randomInt(LOWER.length)],
+        GIAU,
         UPPER[randomInt(UPPER.length)],
         DIGITS[randomInt(DIGITS.length)]
       ];
