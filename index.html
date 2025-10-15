@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Random Password Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      min-height: 100vh;
+      padding: 30px;
+    }
+    h1 {
+      color: #a78bfa;
+    }
+    .container {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding:0px 20px 20px 20px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .password-box {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      user-select: all;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.2s;
+    }
+    button#copyBtn { background: #6366f1; }
+    button#copyBtn:hover { background: #4f46e5; }
+    button#resetBtn { background: #10b981; }
+    button#resetBtn:hover { background: #059669; }
+    h2 {
+      margin-top: 24px;
+      font-size: 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    th { color: #a78bfa; text-align: left; }
+    tr:hover { background: rgba(255,255,255,0.05); }
+    .success {
+      color: #10b981;
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: center;
+      display: none;
+    }
+    .container-mess{
+        height:60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔒 Random Password Generator</h1>
+  <div class="container">
+    <div class="container-mess"> <div id="successMsg" class="success">✅ Đã copy mật khẩu!</div></div>
+    <div id="passwordBox" class="password-box">Chưa có mật khẩu</div>
+    <div class="buttons">
+      <button id="copyBtn">Copy</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+
+    <h2>Lịch sử copy</h2>
+    <table id="historyTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Mật khẩu</th>
+          <th>Thời gian</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="3" style="text-align:center;color:#94a3b8;">Chưa có bản ghi</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const passwordBox = document.getElementById('passwordBox');
+    const copyBtn = document.getElementById('copyBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const historyBody = document.getElementById('historyBody');
+    const successMsg = document.getElementById('successMsg');
+
+    const LOWER = "abcdefghijklmnopqrstuvwxyz";
+    const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const DIGITS = "0123456789";
+    const ALL = LOWER + UPPER + DIGITS;
+    const LENGTH = 16;
+
+    let currentPassword = "";
+
+    function randomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randomInt(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    function generatePassword() {
+      const pwd = [
+        LOWER[randomInt(LOWER.length)],
+        UPPER[randomInt(UPPER.length)],
+        DIGITS[randomInt(DIGITS.length)]
+      ];
+      for (let i = 3; i < LENGTH; i++) {
+        pwd.push(ALL[randomInt(ALL.length)]);
+      }
+      shuffle(pwd);
+      return pwd.join('');
+    }
+
+    function createNewPassword() {
+      currentPassword = generatePassword();
+      passwordBox.textContent = currentPassword;
+      successMsg.style.display = "none";
+    }
+
+    async function copyPassword() {
+      try {
+        await navigator.clipboard.writeText(currentPassword);
+        addToHistory(currentPassword);
+        successMsg.style.display = "block";
+        setTimeout(() => successMsg.style.display = "none", 1500);
+      } catch (e) {
+        alert("Không thể copy mật khẩu.");
+      }
+    }
+
+    function addToHistory(password) {
+      const now = new Date();
+      const timeStr = now.toLocaleString('vi-VN');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${historyBody.children.length}</td>
+        <td>${password}</td>
+        <td>${timeStr}</td>
+      `;
+      if (historyBody.children.length === 1 &&
+          historyBody.children[0].children.length === 1) {
+        historyBody.innerHTML = "";
+      }
+      historyBody.prepend(row);
+    }
+
+    resetBtn.addEventListener('click', createNewPassword);
+    copyBtn.addEventListener('click', copyPassword);
+
+    // initial password
+    createNewPassword();
+  </script>
+</body>
+</html>
