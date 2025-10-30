@@ -94,7 +94,7 @@
 <body>
   <h1>🔒 Random Password Generator</h1>
   <div class="container">
-    <div class="container-mess"> <div id="successMsg" class="success">Đã copy mật khẩu! ✅ </div></div>
+    <div class="container-mess"> <div id="successMsg" class="success">Đã copy mật khẩu! ✅</div></div>
     <div id="passwordBox" class="password-box">Chưa có mật khẩu</div>
     <div class="buttons">
       <button id="copyBtn">Copy</button>
@@ -164,9 +164,12 @@
       successMsg.style.display = "none";
     }
 
-    async function copyPassword() {
+  async function copyPassword() {
       try {
-        await navigator.clipboard.writeText(currentPassword);
+        const now = new Date();
+        const timeStr = now.toLocaleString('vi-VN');
+        const copyText = `${currentPassword}|${timeStr}`;
+        await navigator.clipboard.writeText(copyText);
         addToHistory(currentPassword);
         successMsg.style.display = "block";
         setTimeout(() => successMsg.style.display = "none", 1500);
