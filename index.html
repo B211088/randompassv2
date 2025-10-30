@@ -54,6 +54,13 @@
       color: #fff;
       transition: 0.2s;
     }
+
+
+
+    button#copyFullBtn { background: #d5cb03; }
+    button#copyFullBtn:hover { background: #d521cc; }
+
+
     button#copyBtn { background: #6366f1; }
     button#copyBtn:hover { background: #4f46e5; }
     button#resetBtn { background: #10b981; }
@@ -97,7 +104,8 @@
     <div class="container-mess"> <div id="successMsg" class="success">Đã copy mật khẩu! ✅</div></div>
     <div id="passwordBox" class="password-box">Chưa có mật khẩu</div>
     <div class="buttons">
-      <button id="copyBtn">Copy</button>
+      <button id="copyBtn">Copy pass</button>
+      <button id="copyFullBtn">Copy pass|Time</button>
       <button id="resetBtn">Reset</button>
     </div>
 
@@ -120,6 +128,7 @@
   <script>
     const passwordBox = document.getElementById('passwordBox');
     const copyBtn = document.getElementById('copyBtn');
+    const copyFullBtn = document.getElementById('copyFullBtn');
     const resetBtn = document.getElementById('resetBtn');
     const historyBody = document.getElementById('historyBody');
     const successMsg = document.getElementById('successMsg');
@@ -164,13 +173,23 @@
       successMsg.style.display = "none";
     }
 
-  async function copyPassword() {
+  async function copyPasswordAndTime() {
       try {
         const now = new Date();
         const timeStr = now.toLocaleString('vi-VN');
         const copyText = `${currentPassword}|${timeStr}`;
         await navigator.clipboard.writeText(copyText);
         addToHistory(currentPassword);
+        successMsg.style.display = "block";
+        setTimeout(() => successMsg.style.display = "none", 1500);
+      } catch (e) {
+        alert("Không thể copy mật khẩu.");
+      }
+    }
+      async function copyPassword() {
+      try {
+        const copyText = `${currentPassword}`;
+        await navigator.clipboard.writeText(copyText);
         successMsg.style.display = "block";
         setTimeout(() => successMsg.style.display = "none", 1500);
       } catch (e) {
@@ -196,6 +215,7 @@
 
     resetBtn.addEventListener('click', createNewPassword);
     copyBtn.addEventListener('click', copyPassword);
+    copyFullBtn.addEventListener("click", copyPasswordAndTime);
 
     // initial password
     createNewPassword();
