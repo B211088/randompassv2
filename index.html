@@ -248,6 +248,8 @@ convertBtn.addEventListener("click", async () => {
       // 3️⃣ Xóa dấu phẩy trong số (vd: "1,234" -> "1234")
       line = line.replace(/(\d+),(\d+)/g, "$1$2");
 
+      multiLineInput.value = "";
+      
       return line;
     });
 
