@@ -98,6 +98,27 @@
       justify-content: center;
       align-items: center;
     }
+    /* 🔹 Phần danh sách email */
+    .email-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    .email-item span { word-break: break-all; }
+    .email-item button {
+      background: #6366f1;
+      font-size: 12px;
+      padding: 4px 8px;
+      margin-left: 6px;
+    }
+    .email-item button.delete-btn { background: #ef4444; }
+    .email-item button.restore-btn { background: #10b981; }
   </style>
 </head>
 <body>
@@ -114,18 +135,27 @@
       <button id="resetBtn">Reset</button>
     </div>
 
-
-
     <h2>Chuyển định dạng dòng Instagram</h2>
-    <p>Nhập nội dung ví dụ:  
-      <br><code>0 post<br>0 followers<br>0 following</code>
-    </p>
+    <p>Nhập nội dung ví dụ:<br><code>0 post<br>0 followers<br>0 following</code></p>
     <textarea id="multiLineInput" rows="4" placeholder="Dán nội dung nhiều dòng vào đây..."></textarea>
     <div class="buttons">
       <button id="convertBtn">Copy dạng 1 dòng</button>
     </div>
 
-        <h2>Lịch sử copy</h2>
+        <h2>✉️ Xử lý danh sách email</h2>
+    <textarea id="emailListInput" rows="6" placeholder="Nhập danh sách email, mỗi dòng 1 email..."></textarea>
+    <div class="buttons">
+      <button id="processEmailBtn">Xử lý danh sách</button>
+    </div>
+    <div id="emailListContainer"></div>
+
+    <h2>📋 Danh sách đã copy</h2>
+    <div id="copiedList"></div>
+
+    <h2>🗑️ Danh sách đã xóa</h2>
+    <div id="deletedList"></div>
+
+    <h2>Lịch sử copy</h2>
     <table id="historyTable">
       <thead>
         <tr><th>#</th><th>Mật khẩu</th><th>Thời gian</th></tr>
@@ -143,8 +173,12 @@
   const resetBtn = document.getElementById('resetBtn');
   const historyBody = document.getElementById('historyBody');
   const successMsg = document.getElementById('successMsg');
-  const convertBtn = document.getElementById('convertBtn');
-  const multiLineInput = document.getElementById('multiLineInput');
+
+  const emailListInput = document.getElementById('emailListInput');
+  const processEmailBtn = document.getElementById('processEmailBtn');
+  const emailListContainer = document.getElementById('emailListContainer');
+  const copiedList = document.getElementById('copiedList');
+  const deletedList = document.getElementById('deletedList');
 
   const LOWER = "abcdefghijklmnopqrstuvwxyz";
   const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -153,12 +187,10 @@
   const ALL = LOWER + UPPER + DIGITS;
   const LENGTH = 16;
 
+
   let currentPassword = "";
 
-  function randomInt(max) {
-    return Math.floor(Math.random() * max);
-  }
-
+  function randomInt(max) { return Math.floor(Math.random() * max); }
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = randomInt(i + 1);
@@ -225,43 +257,112 @@
     setTimeout(() => (successMsg.style.display = "none"), 1500);
   }
 
-  // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng (có sửa “1 post” -> “1 posts”)
-convertBtn.addEventListener("click", async () => {
-  const text = multiLineInput.value.trim();
-  if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
+  // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng
+  convertBtn.addEventListener("click", async () => {
+    const text = multiLineInput.value.trim();
+    if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
 
-  const lines = text
-    .split(/\n+/)
-    .map(line => line.trim())
-    .filter(Boolean)
-    .map(line => {
-      // 1️⃣ Nếu dòng là "1 post" thì thêm chữ s
-      if (/^1\s+post$/i.test(line)) {
-        line = line.replace(/post/i, "posts");
-      }
+    const lines = text
+      .split(/\n+/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        if (/^1\s+post$/i.test(line)) line = line.replace(/post/i, "posts");
+        if (/following/i.test(line)) line = line.replace(/following/gi, "follwing");
+        line = line.replace(/(\d+),(\d+)/g, "$1$2");
+        return line;
+      });
 
-      // 2️⃣ Nếu có "following" thì đổi thành "follwing"
-      if (/following/i.test(line)) {
-        line = line.replace(/following/gi, "follwing");
-      }
+    multiLineInput.value = "";
+    let oneLine = lines.join("|");
+    oneLine = oneLine.replace(/^([^|]+)/, "$1 ");
+    await navigator.clipboard.writeText(oneLine);
+    showSuccess("Đã copy định dạng Instagram! ✅");
+  });
 
-      // 3️⃣ Xóa dấu phẩy trong số (vd: "1,234" -> "1234")
-      line = line.replace(/(\d+),(\d+)/g, "$1$2");
+  // 🆕 Xử lý danh sách email
+  processEmailBtn.addEventListener("click", () => {
+    const text = emailListInput.value.trim();
+    if (!text) return alert("Vui lòng nhập danh sách email!");
+    const emails = text.split(/\n+/).map(e => e.trim()).filter(Boolean);
+    emailListContainer.innerHTML = "";
 
-      multiLineInput.value = "";
-      
-      return line;
+    emails.forEach(email => {
+      const username = email.split("@")[0];
+      const div = document.createElement("div");
+      div.className = "email-item";
+      div.innerHTML = `
+        <span>${username}</span>
+        <div>
+          <button class="copy-btn">Copy</button>
+          <button class="delete-btn">Xóa</button>
+        </div>
+      `;
+      emailListContainer.appendChild(div);
+
+      const copyButton = div.querySelector(".copy-btn");
+      const deleteButton = div.querySelector(".delete-btn");
+
+      copyButton.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(username);
+        showSuccess("Đã copy tên email! ✅");
+        moveItem(username, copiedList, "Đã copy!");
+        div.remove();
+      });
+
+      deleteButton.addEventListener("click", () => {
+        moveItem(username, deletedList, "Đã xóa!");
+        div.remove();
+      });
+    });
+    emailListInput.value = "";
+  });
+  
+  function moveItem(username, targetContainer, msg) {
+    const div = document.createElement("div");
+    div.className = "email-item";
+    div.innerHTML = `<span>${username}</span>`;
+    if (targetContainer === deletedList) {
+      const restoreBtn = document.createElement("button");
+      restoreBtn.textContent = "Khôi phục";
+      restoreBtn.className = "restore-btn";
+      restoreBtn.addEventListener("click", () => {
+        addEmailItem(username);
+        div.remove();
+        showSuccess("Đã khôi phục!");
+      });
+      div.appendChild(restoreBtn);
+    }
+    targetContainer.prepend(div);
+    showSuccess(msg);
+  }
+
+  // 🧩 Hàm thêm lại item về danh sách chính
+  function addEmailItem(username) {
+    const div = document.createElement("div");
+    div.className = "email-item";
+    div.innerHTML = `
+      <span>${username}</span>
+      <div>
+        <button class="copy-btn">Copy</button>
+        <button class="delete-btn">Xóa</button>
+      </div>
+    `;
+    emailListContainer.prepend(div);
+    const copyButton = div.querySelector(".copy-btn");
+    const deleteButton = div.querySelector(".delete-btn");
+
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(username);
+      moveItem(username, copiedList, "Đã copy!");
+      div.remove();
     });
 
-  // Nối lại thành 1 dòng và thêm khoảng trắng sau cụm đầu
-  let oneLine = lines.join("|");
-  oneLine = oneLine.replace(/^([^|]+)/, "$1 "); // thêm khoảng trắng sau cụm đầu
-
-  await navigator.clipboard.writeText(oneLine);
-  showSuccess("Đã copy định dạng Instagram! ✅");
-});
-
-
+    deleteButton.addEventListener("click", () => {
+      moveItem(username, deletedList, "Đã xóa!");
+      div.remove();
+    });
+  }
 
   resetBtn.addEventListener('click', createNewPassword);
   copyBtn.addEventListener('click', copyPassword);
@@ -269,6 +370,5 @@ convertBtn.addEventListener("click", async () => {
 
   createNewPassword();
 </script>
-
 </body>
 </html>
