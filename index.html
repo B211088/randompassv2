@@ -16,13 +16,11 @@
       min-height: 100vh;
       padding: 30px;
     }
-    h1 {
-      color: #a78bfa;
-    }
+    h1 { color: #a78bfa; }
     .container {
       background: rgba(255,255,255,0.05);
       border-radius: 12px;
-      padding:0px 20px 20px 20px;
+      padding: 0px 20px 20px 20px;
       width: 100%;
       max-width: 520px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
@@ -39,11 +37,7 @@
       margin-bottom: 12px;
       user-select: all;
     }
-    .buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
+    .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
     button {
       border: none;
       border-radius: 6px;
@@ -54,17 +48,14 @@
       color: #fff;
       transition: 0.2s;
     }
-
-
-
     button#copyFullBtn { background: #d5cb03; }
     button#copyFullBtn:hover { background: #d521cc; }
-
-
     button#copyBtn { background: #6366f1; }
     button#copyBtn:hover { background: #4f46e5; }
     button#resetBtn { background: #10b981; }
     button#resetBtn:hover { background: #059669; }
+    button#convertBtn { background: #ec4899; }
+    button#convertBtn:hover { background: #db2777; }
     h2 {
       margin-top: 24px;
       font-size: 18px;
@@ -90,18 +81,32 @@
       text-align: center;
       display: none;
     }
-    .container-mess{
-        height:60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: #f8fafc;
+      padding: 10px;
+      resize: vertical;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .container-mess {
+      height: 60px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   </style>
 </head>
 <body>
   <h1>🔒 Random Password Generator</h1>
   <div class="container">
-    <div class="container-mess"> <div id="successMsg" class="success">Đã copy mật khẩu! ✅</div></div>
+    <div class="container-mess">
+      <div id="successMsg" class="success">Đã copy! ✅</div>
+    </div>
+
     <div id="passwordBox" class="password-box">Chưa có mật khẩu</div>
     <div class="buttons">
       <button id="copyBtn">Copy pass</button>
@@ -109,20 +114,24 @@
       <button id="resetBtn">Reset</button>
     </div>
 
-
     <h2>Lịch sử copy</h2>
     <table id="historyTable">
       <thead>
-        <tr>
-          <th>#</th>
-          <th>Mật khẩu</th>
-          <th>Thời gian</th>
-        </tr>
+        <tr><th>#</th><th>Mật khẩu</th><th>Thời gian</th></tr>
       </thead>
       <tbody id="historyBody">
         <tr><td colspan="3" style="text-align:center;color:#94a3b8;">Chưa có bản ghi</td></tr>
       </tbody>
     </table>
+
+    <h2>Chuyển định dạng dòng Instagram</h2>
+    <p>Nhập nội dung ví dụ:  
+      <br><code>1 post<br>4 followers<br>0 following</code>
+    </p>
+    <textarea id="multiLineInput" rows="4" placeholder="Dán nội dung nhiều dòng vào đây..."></textarea>
+    <div class="buttons">
+      <button id="convertBtn">Copy dạng 1 dòng</button>
+    </div>
   </div>
 
   <script>
@@ -132,12 +141,14 @@
     const resetBtn = document.getElementById('resetBtn');
     const historyBody = document.getElementById('historyBody');
     const successMsg = document.getElementById('successMsg');
+    const convertBtn = document.getElementById('convertBtn');
+    const multiLineInput = document.getElementById('multiLineInput');
 
     const LOWER = "abcdefghijklmnopqrstuvwxyz";
     const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const DIGITS = "0123456789";
-    const GIAU = "#"
-    const ALL = LOWER + UPPER + DIGITS ;
+    const GIAU = "#";
+    const ALL = LOWER + UPPER + DIGITS;
     const LENGTH = 16;
 
     let currentPassword = "";
@@ -173,26 +184,24 @@
       successMsg.style.display = "none";
     }
 
-  async function copyPasswordAndTime() {
+    async function copyPasswordAndTime() {
       try {
         const now = new Date();
         const timeStr = now.toLocaleString('vi-VN');
         const copyText = `${currentPassword}|${timeStr}`;
         await navigator.clipboard.writeText(copyText);
         addToHistory(currentPassword);
-        successMsg.style.display = "block";
-        setTimeout(() => successMsg.style.display = "none", 1500);
-      } catch (e) {
+        showSuccess();
+      } catch {
         alert("Không thể copy mật khẩu.");
       }
     }
-      async function copyPassword() {
+
+    async function copyPassword() {
       try {
-        const copyText = `${currentPassword}`;
-        await navigator.clipboard.writeText(copyText);
-        successMsg.style.display = "block";
-        setTimeout(() => successMsg.style.display = "none", 1500);
-      } catch (e) {
+        await navigator.clipboard.writeText(currentPassword);
+        showSuccess();
+      } catch {
         alert("Không thể copy mật khẩu.");
       }
     }
@@ -201,23 +210,36 @@
       const now = new Date();
       const timeStr = now.toLocaleString('vi-VN');
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${historyBody.children.length}</td>
-        <td>${password}</td>
-        <td>${timeStr}</td>
-      `;
-      if (historyBody.children.length === 1 &&
-          historyBody.children[0].children.length === 1) {
+      row.innerHTML = `<td>${historyBody.children.length}</td><td>${password}</td><td>${timeStr}</td>`;
+      if (historyBody.children.length === 1 && historyBody.children[0].children.length === 1) {
         historyBody.innerHTML = "";
       }
       historyBody.prepend(row);
     }
 
+    function showSuccess() {
+      successMsg.textContent = "Đã copy! ✅";
+      successMsg.style.display = "block";
+      setTimeout(() => successMsg.style.display = "none", 1500);
+    }
+
+    // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng
+    convertBtn.addEventListener("click", async () => {
+      const text = multiLineInput.value.trim();
+      if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
+      const oneLine = text
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .join("|");
+      await navigator.clipboard.writeText(oneLine);
+      showSuccess();
+    });
+
     resetBtn.addEventListener('click', createNewPassword);
     copyBtn.addEventListener('click', copyPassword);
     copyFullBtn.addEventListener("click", copyPasswordAndTime);
 
-    // initial password
     createNewPassword();
   </script>
 </body>
