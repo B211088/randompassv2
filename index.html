@@ -235,14 +235,19 @@ convertBtn.addEventListener("click", async () => {
     .map(line => line.trim())
     .filter(Boolean)
     .map(line => {
-      // Nếu dòng là "1 post" thì thêm chữ s
+      // 1️⃣ Nếu dòng là "1 post" thì thêm chữ s
       if (/^1\s+post$/i.test(line)) {
         line = line.replace(/post/i, "posts");
       }
-      // Nếu có từ "following" thì đổi thành "follwing"
+
+      // 2️⃣ Nếu có "following" thì đổi thành "follwing"
       if (/following/i.test(line)) {
         line = line.replace(/following/gi, "follwing");
       }
+
+      // 3️⃣ Xóa dấu phẩy trong số (vd: "1,234" -> "1234")
+      line = line.replace(/(\d+),(\d+)/g, "$1$2");
+
       return line;
     });
 
@@ -253,6 +258,7 @@ convertBtn.addEventListener("click", async () => {
   await navigator.clipboard.writeText(oneLine);
   showSuccess("Đã copy định dạng Instagram! ✅");
 });
+
 
 
   resetBtn.addEventListener('click', createNewPassword);
