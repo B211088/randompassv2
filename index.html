@@ -126,7 +126,7 @@
 
     <h2>Chuyển định dạng dòng Instagram</h2>
     <p>Nhập nội dung ví dụ:  
-      <br><code>1 post<br>4 followers<br>0 following</code>
+      <br><code>0 post<br>0 followers<br>0 following</code>
     </p>
     <textarea id="multiLineInput" rows="4" placeholder="Dán nội dung nhiều dòng vào đây..."></textarea>
     <div class="buttons">
@@ -134,113 +134,131 @@
     </div>
   </div>
 
-  <script>
-    const passwordBox = document.getElementById('passwordBox');
-    const copyBtn = document.getElementById('copyBtn');
-    const copyFullBtn = document.getElementById('copyFullBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const historyBody = document.getElementById('historyBody');
-    const successMsg = document.getElementById('successMsg');
-    const convertBtn = document.getElementById('convertBtn');
-    const multiLineInput = document.getElementById('multiLineInput');
+<script>
+  const passwordBox = document.getElementById('passwordBox');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyFullBtn = document.getElementById('copyFullBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const historyBody = document.getElementById('historyBody');
+  const successMsg = document.getElementById('successMsg');
+  const convertBtn = document.getElementById('convertBtn');
+  const multiLineInput = document.getElementById('multiLineInput');
 
-    const LOWER = "abcdefghijklmnopqrstuvwxyz";
-    const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const DIGITS = "0123456789";
-    const GIAU = "#";
-    const ALL = LOWER + UPPER + DIGITS;
-    const LENGTH = 16;
+  const LOWER = "abcdefghijklmnopqrstuvwxyz";
+  const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const DIGITS = "0123456789";
+  const GIAU = "#";
+  const ALL = LOWER + UPPER + DIGITS;
+  const LENGTH = 16;
 
-    let currentPassword = "";
+  let currentPassword = "";
 
-    function randomInt(max) {
-      return Math.floor(Math.random() * max);
+  function randomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  }
 
-    function shuffle(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = randomInt(i + 1);
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
+  function generatePassword() {
+    const pwd = [
+      LOWER[randomInt(LOWER.length)],
+      GIAU,
+      UPPER[randomInt(UPPER.length)],
+      DIGITS[randomInt(DIGITS.length)]
+    ];
+    for (let i = 3; i < LENGTH; i++) {
+      pwd.push(ALL[randomInt(ALL.length)]);
     }
+    shuffle(pwd);
+    return pwd.join('');
+  }
 
-    function generatePassword() {
-      const pwd = [
-        LOWER[randomInt(LOWER.length)],
-        GIAU,
-        UPPER[randomInt(UPPER.length)],
-        DIGITS[randomInt(DIGITS.length)]
-      ];
-      for (let i = 3; i < LENGTH; i++) {
-        pwd.push(ALL[randomInt(ALL.length)]);
-      }
-      shuffle(pwd);
-      return pwd.join('');
-    }
+  function createNewPassword() {
+    currentPassword = generatePassword();
+    passwordBox.textContent = currentPassword;
+    successMsg.style.display = "none";
+  }
 
-    function createNewPassword() {
-      currentPassword = generatePassword();
-      passwordBox.textContent = currentPassword;
-      successMsg.style.display = "none";
-    }
-
-    async function copyPasswordAndTime() {
-      try {
-        const now = new Date();
-        const timeStr = now.toLocaleString('vi-VN');
-        const copyText = `${currentPassword}|${timeStr}`;
-        await navigator.clipboard.writeText(copyText);
-        addToHistory(currentPassword);
-        showSuccess();
-      } catch {
-        alert("Không thể copy mật khẩu.");
-      }
-    }
-
-    async function copyPassword() {
-      try {
-        await navigator.clipboard.writeText(currentPassword);
-        showSuccess();
-      } catch {
-        alert("Không thể copy mật khẩu.");
-      }
-    }
-
-    function addToHistory(password) {
+  async function copyPasswordAndTime() {
+    try {
       const now = new Date();
       const timeStr = now.toLocaleString('vi-VN');
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${historyBody.children.length}</td><td>${password}</td><td>${timeStr}</td>`;
-      if (historyBody.children.length === 1 && historyBody.children[0].children.length === 1) {
-        historyBody.innerHTML = "";
-      }
-      historyBody.prepend(row);
-    }
-
-    function showSuccess() {
-      successMsg.textContent = "Đã copy! ✅";
-      successMsg.style.display = "block";
-      setTimeout(() => successMsg.style.display = "none", 1500);
-    }
-
-    // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng
-    convertBtn.addEventListener("click", async () => {
-      const text = multiLineInput.value.trim();
-      if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
-      const oneLine = text
-        .split(/\n+/)
-        .map(line => line.trim())
-        .filter(Boolean)
-        .join("|");
-      await navigator.clipboard.writeText(oneLine);
+      const copyText = `${currentPassword}|${timeStr}`;
+      await navigator.clipboard.writeText(copyText);
+      addToHistory(currentPassword);
       showSuccess();
+    } catch {
+      alert("Không thể copy mật khẩu.");
+    }
+  }
+
+  async function copyPassword() {
+    try {
+      await navigator.clipboard.writeText(currentPassword);
+      showSuccess();
+    } catch {
+      alert("Không thể copy mật khẩu.");
+    }
+  }
+
+  function addToHistory(password) {
+    const now = new Date();
+    const timeStr = now.toLocaleString('vi-VN');
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${historyBody.children.length}</td><td>${password}</td><td>${timeStr}</td>`;
+    if (historyBody.children.length === 1 && historyBody.children[0].children.length === 1) {
+      historyBody.innerHTML = "";
+    }
+    historyBody.prepend(row);
+  }
+
+  function showSuccess(msg = "Đã copy! ✅") {
+    successMsg.textContent = msg;
+    successMsg.style.display = "block";
+    setTimeout(() => (successMsg.style.display = "none"), 1500);
+  }
+
+  // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng (có sửa “1 post” -> “1 posts”)
+convertBtn.addEventListener("click", async () => {
+  const text = multiLineInput.value.trim();
+  if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
+
+  const lines = text
+    .split(/\n+/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      // Nếu dòng là "1 post" thì thêm chữ s
+      if (/^1\s+post$/i.test(line)) {
+        line = line.replace(/post/i, "posts");
+      }
+      // Nếu có từ "following" thì đổi thành "follwing"
+      if (/following/i.test(line)) {
+        line = line.replace(/following/gi, "follwing");
+      }
+      return line;
     });
 
-    resetBtn.addEventListener('click', createNewPassword);
-    copyBtn.addEventListener('click', copyPassword);
-    copyFullBtn.addEventListener("click", copyPasswordAndTime);
+  // Nối lại thành 1 dòng và thêm khoảng trắng sau cụm đầu
+  let oneLine = lines.join("|");
+  oneLine = oneLine.replace(/^([^|]+)/, "$1 "); // thêm khoảng trắng sau cụm đầu
 
-    createNewPassword();
-  </script>
+  await navigator.clipboard.writeText(oneLine);
+  showSuccess("Đã copy định dạng Instagram! ✅");
+});
+
+
+  resetBtn.addEventListener('click', createNewPassword);
+  copyBtn.addEventListener('click', copyPassword);
+  copyFullBtn.addEventListener("click", copyPasswordAndTime);
+
+  createNewPassword();
+</script>
+
 </body>
 </html>
