@@ -258,27 +258,47 @@
   }
 
   // 🆕 Xử lý chuyển nội dung nhiều dòng → 1 dòng
-  convertBtn.addEventListener("click", async () => {
-    const text = multiLineInput.value.trim();
-    if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
+const normalizeCounts = (lines) => {
+  const result = { posts: 0, followers: 0, following: 0 };
 
-    const lines = text
-      .split(/\n+/)
-      .map(line => line.trim())
-      .filter(Boolean)
-      .map(line => {
-        if (/^1\s+post$/i.test(line)) line = line.replace(/post/i, "posts");
-        if (/following/i.test(line)) line = line.replace(/following/gi, "follwing");
-        line = line.replace(/(\d+),(\d+)/g, "$1$2");
-        return line;
-      });
+  lines.forEach(line => {
+    const cleaned = line.toLowerCase().trim();
+    const numberMatch = cleaned.match(/(\d+)/);
+    if (!numberMatch) return;
 
-    multiLineInput.value = "";
-    let oneLine = lines.join("|");
-    oneLine = oneLine.replace(/^([^|]+)/, "$1 ");
-    await navigator.clipboard.writeText(oneLine);
-    showSuccess("Đã copy định dạng Instagram! ✅");
+    const num = parseInt(numberMatch[1], 10);
+
+    if (cleaned.includes("post")) {
+      result.posts = num;
+    } else if (cleaned.includes("follow")) {
+      // followers / follower / following đều match, phân loại tiếp:
+      if (cleaned.includes("ing")) result.following = num;
+      else result.followers = num;
+    }
   });
+
+  return result;
+};
+
+convertBtn.addEventListener("click", async () => {
+  const text = multiLineInput.value.trim();
+  if (!text) return alert("Vui lòng nhập nội dung cần chuyển!");
+
+  const rawLines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const { posts, followers, following } = normalizeCounts(rawLines);
+
+  // plural rule
+  const postsLabel = posts === 1 ? "post" : "posts";
+  const followersLabel = "followers"; // Instagram luôn dùng followers
+  const followingLabel = "follwing"; // bạn cố tình viết sai -> giữ nguyên
+
+  const finalText = `${posts} ${postsLabel}|${followers} ${followersLabel}|${following} ${followingLabel}`;
+ 
+  await navigator.clipboard.writeText(finalText);
+   multiLineInput.value = "";
+  showSuccess("Đã copy định dạng Instagram! ✅");
+});
+
 
   // 🆕 Xử lý danh sách email
   processEmailBtn.addEventListener("click", () => {
